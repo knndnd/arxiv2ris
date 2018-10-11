@@ -256,11 +256,7 @@ def get_papers(keyword, num_results, field, date, year, from_date, to_date):
 
 def usage():
     print(''' 
-<<<<<<< HEAD
     Usage: arxiv2ris -h {-n number} {-t dateoption} {-m last_months} {-y year}{-f fieldoption} -k "keywords1 keywords2 " 
-=======
-    Usage: arxiv2ris {-h} {-n number} {-t dateoption} {-f fieldoption} -k "keywords1 keywords2 " 
->>>>>>> 832fe67132d3b57c52f9904dd1533da6f496a493
         -h  help
         -n  number of references
         -f  fields to be searched, the fields can be:
@@ -329,7 +325,9 @@ def main():
         elif o in ("-m"):
             date = 'date_range'
             to_date = time.strftime('%Y-%m-%d',time.localtime(time.time()))
-            from_date = time.strftime('%Y-%m-%d',time.localtime(time.time()-int(a)*2592000))
+            tmpTime = time.time()-float(a)*2592000
+            tmpTime = max(0,tmpTime)
+            from_date = time.strftime('%Y-%m-%d',time.localtime(tmpTime))
         elif o in ("-k"):
             keyword = a
 
