@@ -256,7 +256,11 @@ def get_papers(keyword, num_results, field, date, year, from_date, to_date):
 
 def usage():
     print(''' 
+<<<<<<< HEAD
     Usage: arxiv2ris -h {-n number} {-t dateoption} {-m last_months} {-y year}{-f fieldoption} -k "keywords1 keywords2 " 
+=======
+    Usage: arxiv2ris {-h} {-n number} {-t dateoption} {-f fieldoption} -k "keywords1 keywords2 " 
+>>>>>>> 832fe67132d3b57c52f9904dd1533da6f496a493
         -h  help
         -n  number of references
         -f  fields to be searched, the fields can be:
