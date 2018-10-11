@@ -1,5 +1,6 @@
 import re
 import sys
+import time
 import getopt
 import urllib.error
 import urllib.request
@@ -197,10 +198,10 @@ def get_report(paper, keyword):
 
 def txt2reports(txt, keyword, num_to_show):
     found = False
+    nFound = 0
     txt = ''.join(chr(c) for c in txt)
     lines = txt.split('\n')
     lines = clean_empty_lines(lines)
-    unshown = []
 
     for i in range(len(lines)):
         if num_to_show <= 0:
@@ -212,48 +213,28 @@ def txt2reports(txt, keyword, num_to_show):
         if line == '<li class="arxiv-result">':
             found = True
             paper, i = get_next_result(lines, i)
-            #report, has_number = get_report(paper, keyword)
 
             with open("tmp.ris", "a",encoding='utf-8') as f:
                 f.write(paper)
 
-            #print(report)
-            #print(has_number)
-            #print('====================================================')
-            #if has_number:
-            #    print(report)
-            #    print('====================================================')
+            nFound += 1
             num_to_show -= 1
-            #elif report:
-            #    unshown.append(report)
         if line == '</ol>':
             break
-    return unshown, num_to_show, found
+    return nFound, num_to_show, found
 
 
-def get_papers(keyword, num_results, field, date, year):
-    """
-    If keyword is an English word, then search in CS category only to avoid papers from other categories, resulted from the ambiguity
-    """
+def get_papers(keyword, num_results, field, date, year, from_date, to_date):
+    query_temp = 'https://arxiv.org/search/advanced?advanced=&terms-0-operator=AND&terms-0-term={}&terms-0-field={}&classification-computer_science=y&classification-physics_archives=all&date-filter_by={}&date-year={}&date-from_date={}&date-to_date={}&date-date_type=submitted_date&abstracts=show&size={}&order=-announced_date_first&start={}'
 
-    if keyword in set(['GAN', 'bpc']):
-        query_temp = 'https://arxiv.org/search/advanced?advanced=&terms-0-operator=AND&terms-0-term={}&terms-0-field=all&classification-computer_science=y&classification-physics_archives=all&date-filter_by=all_dates&date-year=&date-from_date=&date-to_date=&date-date_type=submitted_date&abstracts=show&size={}&order=-announced_date_first&start={}'
-        keyword = keyword.lower()
-    else:
-        keyword = keyword.lower()
-        #d = enchant.Dict('en_US')
-        #if d.check(keyword):
-        query_temp = 'https://arxiv.org/search/advanced?advanced=&terms-0-operator=AND&terms-0-term={}&terms-0-field={}&classification-computer_science=y&classification-physics_archives=all&date-filter_by={}&date-year={}&date-from_date=&date-to_date=&date-date_type=submitted_date&abstracts=show&size={}&order=-announced_date_first&start={}'
-        #else:
-        #    query_temp = 'https://arxiv.org/search/?searchtype=all&query={}&abstracts=show&size={}&order=-announced_date_first&start={}'
     keyword_q = keyword.replace(' ', '+')
     page = 0
     per_page = 200
     num_to_show = num_results
-    all_unshown = []
+    nFound = 0
 
     while num_to_show > 0:
-        query = query_temp.format(keyword_q, field, date, year, str(per_page), str(per_page * page))
+        query = query_temp.format(keyword_q, field, date, year, from_date, to_date, str(per_page), str(per_page * page))
 
         req = urllib.request.Request(query)
         try:
@@ -264,26 +245,18 @@ def get_papers(keyword, num_results, field, date, year):
 
         txt = response.read()
 
-        unshown, num_to_show, found = txt2reports(txt, keyword, num_to_show)
-        if not found and not all_unshown and num_to_show == num_results:
-            #print('Sorry, we were unable to find any abstract with the word {}'.format(keyword))
-            print('done')
+        nn, num_to_show, found = txt2reports(txt, keyword, num_to_show)
+        nFound += nn
+
+        if not found or num_to_show == 0:
+            print('Found {} references'.format(nFound))
             return
 
-        if num_to_show < num_results / 2 or not found:
-            for report in all_unshown[:num_to_show]:
-                print(report)
-                print('====================================================')
-            if not found:
-                return
-            num_to_show -= len(all_unshown)
-        else:
-            all_unshown.extend(unshown)
         page += 1
 
 def usage():
     print(''' 
-    Usage: sotawhat -h {-n number} {-t dateoption} {-f fieldoption} -k "keywords1 keywords2 " 
+    Usage: arxiv2ris -h {-n number} {-t dateoption} {-m last_months} {-y year}{-f fieldoption} -k "keywords1 keywords2 " 
         -h  help
         -n  number of references
         -f  fields to be searched, the fields can be:
@@ -296,7 +269,8 @@ def usage():
             a         :     'all_dates'
             p         :     'past_12',    past 12 months
             y         :     'specific_year'
-
+        -m  date range, months
+            x        :     past x months
         -y  2018, or other year
         -k  "keywords"
     ''')
@@ -306,7 +280,7 @@ def main():
         f.write('\n')
 
     try:
-        opts, args = getopt.getopt(sys.argv[1:], "hn:f:t:y:k:")
+        opts, args = getopt.getopt(sys.argv[1:], "hn:f:t:y:k:m:")
     except getopt.GetoptErroras:
         # print help information and exit:
         usage()
@@ -316,7 +290,9 @@ def main():
     keyword = ''
     field = 'all'
     date  = 'all_dates'
-    year = '2018'
+    year = ''
+    to_date = ''
+    from_date = ''
 
     for o, a in opts:
         if o in ("-h", "--help"):
@@ -343,17 +319,21 @@ def main():
             elif a == 'y':
                 date = 'specific_year'
                 year = '2018' # by default
-        elif o in ("-y", "--date"):
+        elif o in ("-y"):
             date = 'specific_year'
             year = a
-        elif o in ("-k", "--date"):
+        elif o in ("-m"):
+            date = 'date_range'
+            to_date = time.strftime('%Y-%m-%d',time.localtime(time.time()))
+            from_date = time.strftime('%Y-%m-%d',time.localtime(time.time()-int(a)*2592000))
+        elif o in ("-k"):
             keyword = a
 
     if keyword =='':
         usage()
         sys.exit()
 
-    get_papers(keyword, num_results, field, date, year)
+    get_papers(keyword, num_results, field, date, year, from_date, to_date)
 
 
 if __name__ == '__main__':
