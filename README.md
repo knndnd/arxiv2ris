@@ -2,7 +2,7 @@
 
 This script runs using Python 3.
 
-First, install the required packages. This script only requires ``nltk`` and ``PyEnchant``.
+First, install the required packages. This script only requires ``nltk`.
 
 ```bash
 $ pip3 install -r requirements.txt
