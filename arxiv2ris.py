@@ -283,7 +283,7 @@ def get_papers(keyword, num_results, field, date, year):
 
 def usage():
     print(''' 
-    Usage: sotawhat -h {-n number} {-t dateoption} {-f fieldoption} -k "keywords1 keywords2 " 
+    Usage: arxiv2ris {-h} {-n number} {-t dateoption} {-f fieldoption} -k "keywords1 keywords2 " 
         -h  help
         -n  number of references
         -f  fields to be searched, the fields can be:
