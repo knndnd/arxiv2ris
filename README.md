@@ -33,7 +33,7 @@ $ /Applications/Python\ 3.x/Install\ Certificates.command
 
 To query for a certain keyword, run:
 
-Usage: arxiv2ris -h {-n number} {-t dateoption} {-f fieldoption} -k "keywords1 keywords2 " 
+Usage: arxiv2ris {-h} {-n number} {-t dateoption} {-f fieldoption} {-m months} -k "keywords1 keywords2 " 
 
 	-h  help
 	
@@ -60,6 +60,8 @@ Usage: arxiv2ris -h {-n number} {-t dateoption} {-f fieldoption} -k "keywords1 k
 		y         :     'specific_year'
 
 	-y  2018, or other year
+	
+	-m  months, can be float value
 	
 	-k  "keywords"
 
