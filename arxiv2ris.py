@@ -95,6 +95,8 @@ def clean_empty_lines(lines):
     for line in lines:
         line = line.strip()
         if line:
+            line = line.replace("&#39;","'")
+            line = line.replace("&#34;", "\"")
             cleaned.append(line)
     return cleaned
 
@@ -133,12 +135,12 @@ def has_number(sent):
             token = token[:-2]
         if token.endswith('x'):  # sometimes people write numbers as 1.7x
             token = token[:-1]
-        if token.startswith('x'):  # sometimes people write numbers as x1.7
-            token = token[1:]
         if token.startswith('$') and token.endswith('$'):
             token = token[1:-1]
         if is_float(token):
             return True
+        if token.startswith('x'):  # sometimes people write numbers as x1.7
+            token = token[1:]
         try:
             value = int(token)
         except:
@@ -205,7 +207,7 @@ def txt2reports(txt, keyword, num_to_show):
 
     for i in range(len(lines)):
         if num_to_show <= 0:
-            return unshown, num_to_show, found
+            return nFound, num_to_show, found
 
         line = lines[i].strip()
         if len(line) == 0:
@@ -329,7 +331,15 @@ def main():
             tmpTime = max(0,tmpTime)
             from_date = time.strftime('%Y-%m-%d',time.localtime(tmpTime))
         elif o in ("-k"):
-            keyword = a
+#            keyword = a
+            keys = a.split(' ')
+            for s in keys:
+                if keyword != '':
+                    keyword = keyword + '+'
+                if s.find('-') > -1:
+                    keyword += '\"'+s+'\"'
+                else:
+                    keyword += s
 
     if keyword =='':
         usage()
