@@ -1,2 +1,4 @@
 
 tmp.ris
+*.xml
+.idea/workspace.xml
